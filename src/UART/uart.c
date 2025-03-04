@@ -1,4 +1,4 @@
-#include "UART.h"
+#include <uart/uart.h>
 
 void UART_Init(uint16_t baudrate) {
     uint16_t ubrr_value = ((F_CPU / (baudrate * 16UL)) - 1);  // Calculate UBRR

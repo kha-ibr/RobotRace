@@ -4,7 +4,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define SERVO_PIN 3
+#define SERVO_PIN PC3
 
 void Servo_Init();
 void Servo_SetAngle(uint8_t angle);

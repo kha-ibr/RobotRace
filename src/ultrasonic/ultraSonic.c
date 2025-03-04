@@ -1,4 +1,4 @@
-#include <UltraSonic_servo/ultraSonic.h>
+#include <ultrasonic/ultraSonic.h>
 
 void Ultrasonic_Init() {
     DDRB |= (1 << TRIG_PIN);  // Set TRIG (PB4) as output

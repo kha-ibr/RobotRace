@@ -1,4 +1,4 @@
-#include <IRSensor/IRSensor.h>
+#include <irsensor/IRSensor.h>
 
 void ADC_Init() {
     ADMUX = (1 << REFS0);
