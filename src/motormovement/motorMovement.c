@@ -1,6 +1,6 @@
 #include <motormovement/motorMovement.h>
 
-void init_motor(void)
+void Init_Motor_IO(void)
 {
     // Direction pins as outputs
     ML_Ctrl_DDR |= (1 << ML_Ctrl_PIN);
@@ -30,8 +30,8 @@ void move_forward(void)
     MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);
 
     // PWM duty cycles (example: 55 out of 255)
-    OCR0B = 60;  // Left motor (OC0B)
-    OCR0A = 60;  // Right motor (OC0A)
+    OCR0B = 200;  // Left motor (OC0B)
+    OCR0A = 200;  // Right motor (OC0A)
 }
 
 void move_backward(void)
@@ -52,7 +52,7 @@ void turn_left(void)
     MR_Ctrl_PORT |=  (1 << MR_Ctrl_PIN);
 
     // Left motor speed 200, Right motor speed 55
-    OCR0B = 70; 
+    OCR0B = 60; 
     OCR0A = 40;  
 }
 
@@ -64,7 +64,7 @@ void turn_right(void)
 
     // Left motor speed 55, Right motor speed 200
     OCR0B = 40;  
-    OCR0A = 70; 
+    OCR0A = 60; 
 }
 
 void stop_motors(void)

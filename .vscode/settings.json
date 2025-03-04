@@ -4,6 +4,7 @@
         "delay.h": "c",
         "irsensor.h": "c",
         "ultrasonic.h": "c",
-        "motormovement.h": "c"
+        "motormovement.h": "c",
+        "servo.h": "c"
     }
 }

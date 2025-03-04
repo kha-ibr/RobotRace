@@ -24,9 +24,9 @@
 // Right Motor PWM (MR_PWM) -> PD6 (OC0A)
 #define MR_PWM_DDR   DDRD
 #define MR_PWM_PORT  PORTD
-#define MR_PWM_PIN   6  
+#define MR_PWM_PIN   6
 
-void init_motor(void);
+void Init_Motor_IO(void);
 void move_forward(void);
 void move_backward(void);
 void turn_left(void);
