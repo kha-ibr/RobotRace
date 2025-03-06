@@ -1,78 +1,64 @@
 #include <motormovement/motorMovement.h>
 
+// Initialize motor I/O and configure Timer0 for PWM
 void Init_Motor_IO(void)
 {
-    // Direction pins as outputs
-    ML_Ctrl_DDR |= (1 << ML_Ctrl_PIN);
-    MR_Ctrl_DDR |= (1 << MR_Ctrl_PIN);
+    ML_Ctrl_DDR |= (1 << ML_Ctrl_PIN);  // Set left motor direction pin as output
+    MR_Ctrl_DDR |= (1 << MR_Ctrl_PIN);  // Set right motor direction pin as output
+    ML_PWM_DDR  |= (1 << ML_PWM_PIN);   // Set left motor PWM pin as output
+    MR_PWM_DDR  |= (1 << MR_PWM_PIN);   // Set right motor PWM pin as output
 
-    // PWM pins as outputs
-    ML_PWM_DDR |= (1 << ML_PWM_PIN);
-    MR_PWM_DDR |= (1 << MR_PWM_PIN);
-
-    // Fast PWM mode (WGM00 and WGM01 set) 
-    // Non-inverting output on both channels A and B
-    TCCR0A = (1 << WGM00) | (1 << WGM01)
+    // Configure Timer0 for Fast PWM, non-inverting on OC0A and OC0B
+    TCCR0A = (1 << WGM00) | (1 << WGM01) 
            | (1 << COM0A1) | (1 << COM0B1);
-
-    // Prescaler = 64: (1 << CS01) | (1 << CS00) -> CPU clock / 64
+    // Set Timer0 prescaler to 64 (CPU clock/64)
     TCCR0B = (1 << CS01) | (1 << CS00);
 
-    // Initialize compare registers to 0 (motors off)
-    OCR0A = 0;  
-    OCR0B = 0;
+    OCR0A = 0;  // Initialize right motor PWM duty cycle to 0 (motor off)
+    OCR0B = 0;  // Initialize left motor PWM duty cycle to 0 (motor off)
 }
 
+// Move the robot forward
 void move_forward(void)
 {
-    // Both direction pins HIGH
-    ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN);
-    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);
-
-    // PWM duty cycles (example: 55 out of 255)
-    OCR0B = 200;  // Left motor (OC0B)
-    OCR0A = 200;  // Right motor (OC0A)
+    ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN);  // Set left motor direction to forward
+    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);  // Set right motor direction to forward
+    OCR0B = 160;  // Set left motor speed (PWM duty cycle)
+    OCR0A = 160;  // Set right motor speed (PWM duty cycle)
 }
 
+// Move the robot backward
 void move_backward(void)
 {
-    // Both direction pins LOW
-    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN);
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);
-
-    // PWM duty cycles (example: 200 out of 255)
-    OCR0B = 40; // Left motor
-    OCR0A = 70; // Right motor
+    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN); // Set left motor direction to reverse
+    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN); // Set right motor direction to reverse
+    OCR0B = 70;   // Set left motor speed (PWM duty cycle)
+    OCR0A = 70;   // Set right motor speed (PWM duty cycle)
 }
 
+// Turn the robot left
 void turn_left(void)
 {
-    // Left motor LOW, Right motor HIGH
-    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN);
-    MR_Ctrl_PORT |=  (1 << MR_Ctrl_PIN);
-
-    // Left motor speed 200, Right motor speed 55
-    OCR0B = 60; 
-    OCR0A = 40;  
+    ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN); // Left motor reverse
+    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);    // Right motor forward
+    OCR0B = 200;   // Set left motor speed (PWM duty cycle)
+    OCR0A = 40;   // Set right motor speed (PWM duty cycle)
 }
 
+// Turn the robot right
 void turn_right(void)
 {
-    // Left motor HIGH, Right motor LOW
-    ML_Ctrl_PORT |=  (1 << ML_Ctrl_PIN);
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);
-
-    // Left motor speed 55, Right motor speed 200
-    OCR0B = 40;  
-    OCR0A = 60; 
+    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN);    // Left motor forward
+    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);     // Right motor reverse
+    OCR0B = 40;   // Set left motor speed (PWM duty cycle)
+    OCR0A = 200;   // Set right motor speed (PWM duty cycle)
 }
 
+// Stop all motors
 void stop_motors(void)
 {
-    // For simplicity, direction pins LOW, PWM = 0
-    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN);
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);
-
-    OCR0B = 0; 
-    OCR0A = 0; 
+    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN); // Set left motor direction pin LOW
+    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN); // Set right motor direction pin LOW
+    OCR0B = 0;  // Set left motor PWM duty cycle to 0
+    OCR0A = 0;  // Set right motor PWM duty cycle to 0
 }

@@ -1,4 +1,4 @@
-#include <ultrasonic/ultraSonic.h>
+#include "ultraSonic.h"
 
 void Ultrasonic_Init() {
     DDRB |= (1 << TRIG_PIN);  // Set TRIG (PB4) as output
@@ -28,6 +28,7 @@ uint16_t Ultrasonic_ReadDistance() {
     duration = TCNT1;
 
     // Convert time to distance (Speed of sound = 343m/s)
+    // (duration/2 gives the one-way travel time in timer ticks; adjust conversion as needed)
     distance = (duration / 2) * 0.0343;
 
     return distance;  // Return distance in cm
