@@ -4,10 +4,13 @@
 #include <avr/io.h>
 #include <stdlib.h>
 
+int moveEnabled = 0;
+
 // Function Prototypes
 void UART_Init(uint16_t baudrate);
 void UART_Transmit(char data);
 void UART_SendString(const char *str);
 void UART_SendNumber(uint16_t num);
+char UART_Receive(void);
 
 #endif

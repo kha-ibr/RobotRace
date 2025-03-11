@@ -5,6 +5,7 @@
         "irsensor.h": "c",
         "ultrasonic.h": "c",
         "motormovement.h": "c",
-        "servo.h": "c"
+        "servo.h": "c",
+        "uart.h": "c"
     }
 }

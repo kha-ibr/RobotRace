@@ -27,6 +27,9 @@
 #define MR_PWM_PORT  PORTD
 #define MR_PWM_PIN   6   // Bit 6 on PORTD is used for right motor PWM (OC0A)
 
+#define LEFT_SPEED	OCR0B
+#define RIGHT_SPEED	OCR0A
+
 // Function prototypes for motor control operations
 void Init_Motor_IO(void);// Initialize motor I/O pins and Timer0 PWM settings
 void move_forward(void);

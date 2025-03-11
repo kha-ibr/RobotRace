@@ -9,8 +9,8 @@
 #define MIDDLELEFTSENSORPIN     PC2  // Middle left sensor
 
 // Define left/right sensor pins on PORTC
+#define RIGHTSENSORPIN          PC3  // Right sensor
 #define LEFTSENSORPIN           PC4  // Left sensor
-#define RIGHTSENSORPIN          PC5  // Right sensor
 
 // Initialize the ADC for IR sensor readings.
 void ADC_Init();

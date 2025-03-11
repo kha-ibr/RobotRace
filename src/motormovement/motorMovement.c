@@ -1,4 +1,5 @@
 #include <motormovement/motorMovement.h>
+#include <uart/uart.h>
 
 // Initialize motor I/O and configure Timer0 for PWM
 void Init_Motor_IO(void)
@@ -27,31 +28,22 @@ void move_forward(void)
     OCR0A = 160;  // Set right motor speed (PWM duty cycle)
 }
 
-// Move the robot backward
-void move_backward(void)
-{
-    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN); // Set left motor direction to reverse
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN); // Set right motor direction to reverse
-    OCR0B = 70;   // Set left motor speed (PWM duty cycle)
-    OCR0A = 70;   // Set right motor speed (PWM duty cycle)
-}
-
 // Turn the robot left
 void turn_left(void)
 {
-    ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN); // Left motor reverse
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);    // Right motor forward
-    OCR0B = 200;   // Set left motor speed (PWM duty cycle)
-    OCR0A = 40;   // Set right motor speed (PWM duty cycle)
+    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN); // Left motor reverse
+    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);    // Right motor forward
+    OCR0B = 130;  // Reduce speed on left wheel
+    OCR0A = 160;  // Slightly increase right wheel speed
 }
 
 // Turn the robot right
 void turn_right(void)
 {
-    ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN);    // Left motor forward
-    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);     // Right motor reverse
-    OCR0B = 40;   // Set left motor speed (PWM duty cycle)
-    OCR0A = 200;   // Set right motor speed (PWM duty cycle)
+    ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN);    // Left motor forward
+    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);     // Right motor reverse
+    OCR0B = 160;  // Slightly increase left wheel speed
+    OCR0A = 130;  // Reduce speed on right wheel
 }
 
 // Stop all motors
