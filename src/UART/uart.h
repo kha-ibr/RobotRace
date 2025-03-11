@@ -4,8 +4,6 @@
 #include <avr/io.h>
 #include <stdlib.h>
 
-int moveEnabled = 0;
-
 // Function Prototypes
 void UART_Init(uint16_t baudrate);
 void UART_Transmit(char data);

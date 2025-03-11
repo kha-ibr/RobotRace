@@ -33,7 +33,6 @@
 // Function prototypes for motor control operations
 void Init_Motor_IO(void);// Initialize motor I/O pins and Timer0 PWM settings
 void move_forward(void);
-void move_backward(void);
 void turn_left(void);
 void turn_right(void);
 void stop_motors(void);

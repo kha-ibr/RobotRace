@@ -5,7 +5,7 @@ void UART_Init(uint16_t baudrate)
     uint16_t ubrr_value = ((F_CPU / (baudrate * 16UL)) - 1);  // Calculate UBRR
     UBRR0H = (ubrr_value >> 8);  // Set baud rate high byte
     UBRR0L = ubrr_value;  // Set baud rate low byte
-    UCSR0B = (1 << TXEN0);  // Enable Transmitter
+    UCSR0B = (1 << TXEN0) | (1 << RXEN0);  // Enable Transmitter
     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);  // 8-bit data, 1 stop bit
 }
 
@@ -22,6 +22,7 @@ void UART_SendString(const char *str)
     }
 }
 
+// Used for the ultrasonic sensor
 void UART_SendNumber(uint16_t num) 
 {
     char buffer[10];
@@ -35,16 +36,3 @@ char UART_Receive(void)
     return UDR0;  // Get and return received data from buffer
 }
 
-ISR(USART_RX_vect) {
-	uint8_t command = UDR0;
-    
-	if (command == 'A') {
-		
-	}
-	else if (command == 'C') {
-
-	}
-	else if (command == 'B') {
-		
-	}
-}
