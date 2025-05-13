@@ -1,29 +1,21 @@
-
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdbool.h>
-#include <irsensor/IRSensor.h>
-#include <ultraSonic/ultraSonic.h>
-#include <uart/uart.h>
-#include <servo/servo.h>
-#include <motormovement/motorMovement.h>
-
-// // Define Safe Zone for Middle Sensors
-// #define MIDDLE_LOW_THRESHOLD  400   // Below this is too white (off-track)
-// #define MIDDLE_HIGH_THRESHOLD 750   // Above this is too dark (off-track)
-
-// // Define Edge Detection for Left and Right Sensors
-// #define LEFT_WHITE_THRESHOLD  407   // Above this, left sensor sees white (turn right)
-// #define RIGHT_BLACK_THRESHOLD 583   // Below this, right sensor sees black (turn left)
+#include <IRSensor.h>
+#include <ultraSonic.h>
+#include <uart.h>
+#include <servo.h>
+#include <stdio.h> // Include for sprintf
+#include <motorMovement.h>
 
 #define MIDDLE_LOW_THRESHOLD 400  // Safe Zone Lower Bound
 #define MIDDLE_HIGH_THRESHOLD 770 // Safe Zone Upper Bound
 
-#define LEFT_WHITE_THRESHOLD 415  // If left sensor is above this, turn right
-#define RIGHT_BLACK_THRESHOLD 648 // If right sensor is below this, turn left
+#define LEFT_WHITE_THRESHOLD 410  // If left sensor is above this, turn right
+#define RIGHT_BLACK_THRESHOLD 663 // If right sensor is below this, turn left
 
 // Obstacle Detection Threshold (Adjust as Needed)
-#define OBSTACLE_THRESHOLD 10 // Distance in cm
+#define OBSTACLE_THRESHOLD 15 // Distance in cm
 
 bool isMoving = false; // Flag to track robot movement state
 
@@ -38,20 +30,19 @@ void sensorTest(uint16_t sensor);
 void motor_movement_test();
 void servo_movement_test();
 void ultrasonic_test();
-void follow_track(void);
+void sensor_test();
 
-// Command receiving function that reads a command from the Bluetooth module.
-void recieveCommand();
-void getbluetoothCommand();
+void follow_track(void);
 
 // Obstacle scanning routine that sweeps the servo from 0° to 180°
 // and chooses the best angle based on ultrasonic distance.
 void obstacle_avoidance_scan(void);
+void obstacle_avoidance(void);
 
 void setup(void)
 {
     ADC_Init();
-    Ultrasonic_Init();
+    ultrasonic_init();
     UART_Init(9600);
     servo_init();
     Init_Motor_IO();
@@ -59,105 +50,111 @@ void setup(void)
 
 void loop(void)
 {
-    if (UCSR0A & (1 << RXC0))  // Check if data is available to read
+    // Read Ultrasonic Sensor
+    // uint16_t obstacle_distance = ultrasonic_read_distance();
+
+    // if (!obstacle_distance)
+    // {
+    //     obstacle_avoidance();
+    // }
+    // else
+    // {
+       
+    // }
+
+    if (UCSR0A & (1 << RXC0)) // Check if data is available to read
     {
-        char command = UART_Receive();  // Read received character
+        char command = UART_Receive(); // Read received character
 
         // Check the command and update movement state
-        if (command == 'A')  // Start button
+        if (command == 'A') // Start button
         {
-            isMoving = true;  // Set moving state to true
-            move_forward();   // Start moving forward
-            UART_SendString("\nCommand: START\n");
+            isMoving = true; // Set moving state to true
+            move_forward();  // Start moving forward
         }
-        else if (command == 'B')  // Stop and Go button
+        else if (command == 'B') // Stop and Go button
         {
-            stop_motors();  // Stop the motors
-            _delay_ms(5000);  // Wait for 5 seconds (optional)
-            isMoving = true;  // Allow moving again
-            move_forward();   // Start moving forward
-            UART_SendString("\nCommand: STOP_AND_GO\n");
+            stop_motors();   // Stop the motors
+            _delay_ms(5000); // Wait for 5 seconds (optional)
+            isMoving = true; // Allow moving again
+            move_forward();  // Start moving forward
         }
-        else if (command == 'C')  // Stop button
+        else if (command == 'C') // Stop button
         {
-            isMoving = false;  // Set moving state to false (stop the robot)
-            stop_motors();  // Stop the motors immediately
-            UART_SendString("\nCommand: STOP\n");
-        }
-        else
-        {
-            UART_SendString("\nUnknown Command\n");
+            isMoving = false; // Set moving state to false (stop the robot)
+            stop_motors();    // Stop the motors immediately
         }
     }
 
     // If not receiving any command, the robot should follow the track if it's moving
-    if (isMoving) {
-        follow_track();  // Keep following the track if the robot is moving
+    if (isMoving)
+    {
+        follow_track(); // Keep following the track if the robot is moving
     }
 }
 
 void loopTest()
 {
-    
+    // Read Ultrasonic Sensor
+    uint16_t distance = ultrasonic_read_distance();
 
-    // if (UCSR0A & (1 << RXC0)) // Check if data is available to read
-    // {
-    //     char command = UART_Receive(); // Read received character
+    if (distance < OBSTACLE_THRESHOLD)
+    {
+        obstacle_avoidance();
+        return;
+    }
 
-    //     // Check if the command is valid and execute the appropriate action
-    //     if (command == 'A') // Start
-    //     {
-    //         move_forward();
-    //         UART_SendString("\nCommand: START\n");
-    //     }
-    //     else if (command == 'B') // Stop and Go
-    //     {
-    //         stop_motors();
-    //         _delay_ms(5000); // Wait for 5 seconds
-    //         move_forward();  // Resume movement
-    //         UART_SendString("\nCommand: STOP_AND_GO\n");
-    //     }
-    //     else if (command == 'C') // Stop
-    //     {
-    //         stop_motors();
-    //     }
-    //     else
-    //     {
-    //         UART_SendString("\nUnknown Command\n");
-    //     }
-    // }
-    // else
-    // {
-    //     // Execute track-following logic if no command is received
-    //     follow_track();
-    // }
-    _delay_ms(50);
+    // **Step 2: Read IR Sensor Values**
+    uint16_t middleLeftSensor = Read_IR_Sensor(MIDDLELEFTSENSORPIN);
+    // uint16_t middleSensor      = Read_IR_Sensor(MIDDLESENSORPIN);
+    uint16_t middleRightSensor = Read_IR_Sensor(MIDDLERIGHTSENSORPIN);
+    uint16_t rightSensor = Read_IR_Sensor(RIGHTSENSORPIN);
+    uint16_t leftSensor = Read_IR_Sensor(LEFTSENSORPIN);
+
+    // **Step 3: Determine if Middle Sensors are in Safe Zone**
+    bool middleLeftSafe = (middleLeftSensor >= MIDDLE_LOW_THRESHOLD && middleLeftSensor <= MIDDLE_HIGH_THRESHOLD);
+    // bool middleSafe      = (middleSensor      >= MIDDLE_LOW_THRESHOLD && middleSensor      <= MIDDLE_HIGH_THRESHOLD);
+    bool middleRightSafe = (middleRightSensor >= MIDDLE_LOW_THRESHOLD && middleRightSensor <= MIDDLE_HIGH_THRESHOLD);
+
+    bool safeZone = middleLeftSafe && middleRightSafe;
+
+    // **Step 4: Check Edge Sensors**
+    bool leftEdgeDetected = (leftSensor > LEFT_WHITE_THRESHOLD);    // Left sees too much white
+    bool rightEdgeDetected = (rightSensor < RIGHT_BLACK_THRESHOLD); // Right sees too much black
+
+    // **Step 6: Main Decision Logic**
+    if (safeZone)
+    {
+        move_forward(); // Move forward if all middle sensors are safe
+    }
+    else if (rightEdgeDetected) // Right is too dark → Turn left
+    {
+        turn_right();
+    }
+    else if (leftEdgeDetected) // Left is too white → Turn right
+    {
+        turn_left();
+    }
+    else
+    {
+        stop_motors(); // Lost track, stop
+    }
+
+    _delay_ms(100);
 }
 
 int main(void)
 {
     setup();
+
     while (1)
     {
         loop();
         // loopTest();
+        // sensor_test();
+        // ultrasonic_test();
     }
     return 0;
-}
-
-void sensor_test()
-{
-    // servo movement test
-    // servo_movement_test();
-
-    // motor movement test
-    // motor_movement_test();
-
-    // ultrasonic test
-    // ultrasonic_test();
-
-    // IR sensor test
-    // IR_sensor_test();
 }
 
 // Function to handle normal line-following behavior
@@ -183,10 +180,6 @@ void follow_track(void)
         bool leftEdgeDetected = (leftSensor > LEFT_WHITE_THRESHOLD);    // Left sees too much white
         bool rightEdgeDetected = (rightSensor < RIGHT_BLACK_THRESHOLD); // Right sees too much black
 
-        // **Step 5: Send Sensor Data to Bluetooth for Debugging**
-        // sendIRData(middleLeftSensor, middleSensor, middleRightSensor, rightSensor, leftSensor, distance);
-        // sensorTest(leftEdgeDetected);
-
         // **Step 6: Main Decision Logic**
         if (safeZone)
         {
@@ -208,30 +201,10 @@ void follow_track(void)
     _delay_ms(50);
 }
 
-void recieveCommand()
+void obstacle_avoidance(void)
 {
-    // **Step 1: Check for Bluetooth Commands**
-    char command = UART_Receive();
-
-    if (command == START)
-    {
-        UART_SendString("\nCommand: START\n");
-        move_forward();
-    }
-    else if (command == STOP_AND_GO)
-    {
-        UART_SendString("\nCommand: STOP_AND_GO\n");
-        stop_motors();
-        _delay_ms(5000); // Pause for 5 seconds
-        move_forward();  // Resume movement
-    }
-    else if (command == STOP)
-    {
-        UART_SendString("\nCommand: STOP\n");
-        stop_motors();
-    }
-
-    _delay_ms(50);
+    stop_motors();
+    _delay_ms(2000);
 }
 
 void obstacle_avoidance_scan(void)
@@ -241,6 +214,10 @@ void obstacle_avoidance_scan(void)
 
     _delay_ms(100);
 
+    // Reset servo position before scanning
+    set_angle(90);
+    _delay_ms(300);
+
     uint8_t bestAngle = 90;    // Default to center
     uint16_t bestDistance = 0; // Maximum distance found
 
@@ -249,19 +226,12 @@ void obstacle_avoidance_scan(void)
     {
         set_angle(angle);
         _delay_ms(300); // Allow time for the servo to reach the position.
-        uint16_t d = Ultrasonic_ReadDistance();
-
-        // Debug output for each angle.
-        UART_SendString("Angle: ");
-        UART_SendNumber(angle);
-        UART_SendString("  Distance: ");
-        UART_SendNumber(d);
-        UART_SendString("\r\n");
+        uint16_t read_distance = ultrasonic_read_distance();
 
         // Record the best angle.
-        if (d > bestDistance)
+        if (read_distance > bestDistance)
         {
-            bestDistance = d;
+            bestDistance = read_distance;
             bestAngle = angle;
         }
     }
@@ -270,32 +240,35 @@ void obstacle_avoidance_scan(void)
     set_angle(90);
     _delay_ms(300);
 
-    // Debug output for chosen best angle.
-    UART_SendString("Best Angle: ");
-    UART_SendNumber(bestAngle);
-    UART_SendString("  Best Distance: ");
-    UART_SendNumber(bestDistance);
-    UART_SendString("\r\n");
-
     // Decide turning direction based on best angle.
     if (bestAngle < 90)
     {
         turn_left();
-        _delay_ms(500);
+        _delay_ms(700);
     }
     else if (bestAngle > 90)
     {
         turn_right();
-        _delay_ms(500);
-    }
-    else
-    {
-        move_forward();
-        _delay_ms(500);
+        _delay_ms(700);
     }
 }
 
-// Sensor test functions for debugging.
+// ------------ Test Functions ------------ //
+void sensor_test()
+{
+    // servo movement test
+    // servo_movement_test();
+
+    // motor movement test
+    // motor_movement_test();
+
+    // ultrasonic test
+    ultrasonic_test();
+
+    // IR sensor test
+    // IR_sensor_test();
+}
+
 void motor_movement_test()
 {
     // Test the motor movement functions.
@@ -330,10 +303,12 @@ void ultrasonic_test()
     // Test the ultrasonic sensor.
     while (1)
     {
-        uint16_t distance = Ultrasonic_ReadDistance();
+        uint16_t distance = ultrasonic_read_distance();
+
         UART_SendString("Distance: ");
         UART_SendNumber(distance);
         UART_SendString(" cm\r\n");
+
         _delay_ms(1000);
     }
 }
@@ -365,14 +340,5 @@ void sensorTest(uint16_t sensor)
 {
     UART_SendString("Sensor: ");
     UART_SendNumber(sensor);
-    UART_SendString("\r\n");
-}
-
-// test bluetooth command and output it on the app
-void getbluetoothCommand()
-{
-    char command = UART_Receive();
-    UART_SendString("Command: ");
-    UART_Transmit(command);
     UART_SendString("\r\n");
 }

@@ -1,5 +1,5 @@
-#include <motormovement/motorMovement.h>
-#include <uart/uart.h>
+#include "motorMovement.h"
+#include "servo.h"
 
 // Initialize motor I/O and configure Timer0 for PWM
 void Init_Motor_IO(void)
@@ -17,6 +17,9 @@ void Init_Motor_IO(void)
 
     OCR0A = 0;  // Initialize right motor PWM duty cycle to 0 (motor off)
     OCR0B = 0;  // Initialize left motor PWM duty cycle to 0 (motor off)
+    
+    // Initialize servo to center position
+    set_angle(SERVO_CENTER);
 }
 
 // Move the robot forward
@@ -26,24 +29,27 @@ void move_forward(void)
     MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);  // Set right motor direction to forward
     OCR0B = 160;  // Set left motor speed (PWM duty cycle)
     OCR0A = 160;  // Set right motor speed (PWM duty cycle)
+    set_angle(SERVO_CENTER);  // Center the servo when going straight
 }
 
 // Turn the robot left
 void turn_left(void)
 {
     ML_Ctrl_PORT &= ~(1 << ML_Ctrl_PIN); // Left motor reverse
-    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);    // Right motor forward
+    MR_Ctrl_PORT |= (1 << MR_Ctrl_PIN);  // Right motor forward
     OCR0B = 130;  // Reduce speed on left wheel
     OCR0A = 160;  // Slightly increase right wheel speed
+    // set_angle(SERVO_LEFT_OFFSET);  // Turn servo slightly left when turning left
 }
 
 // Turn the robot right
 void turn_right(void)
 {
     ML_Ctrl_PORT |= (1 << ML_Ctrl_PIN);    // Left motor forward
-    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);     // Right motor reverse
+    MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN);   // Right motor reverse
     OCR0B = 160;  // Slightly increase left wheel speed
     OCR0A = 130;  // Reduce speed on right wheel
+    set_angle(SERVO_RIGHT_OFFSET);  // Turn servo slightly right when turning right
 }
 
 // Stop all motors
@@ -53,4 +59,5 @@ void stop_motors(void)
     MR_Ctrl_PORT &= ~(1 << MR_Ctrl_PIN); // Set right motor direction pin LOW
     OCR0B = 0;  // Set left motor PWM duty cycle to 0
     OCR0A = 0;  // Set right motor PWM duty cycle to 0
+    set_angle(SERVO_CENTER);  // Center the servo when stopped
 }

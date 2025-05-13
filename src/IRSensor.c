@@ -1,4 +1,4 @@
-#include <irsensor/IRSensor.h>
+#include "IRSensor.h"
 
 // Initialize the ADC: use AVcc as reference and set prescaler to 128.
 void ADC_Init() {
